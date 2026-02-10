@@ -157,11 +157,7 @@ export default function AssetDetails({
     const imageErrs: Record<string, string> = {};
     const simpleErrs: Record<string, string> = {};
 
-    const validateBlock = async (
-      key: string,
-      form: any,
-      acc: string[],
-    ) => {
+    const validateBlock = async (key: string, form: any, acc: string[]) => {
       const ok = await form.trigger();
       if (!ok || images[key].length === 0) {
         if (images[key].length === 0)
@@ -357,8 +353,8 @@ const AssetBlock = ({
     assetType === 'mobile'
       ? MOBILE_ACCESSORIES
       : assetType === 'tablet'
-      ? TAB_ACCESSORIES
-      : LAPTOP_ACCESSORIES;
+        ? TAB_ACCESSORIES
+        : LAPTOP_ACCESSORIES;
 
   const {
     register,
@@ -374,18 +370,13 @@ const AssetBlock = ({
       {/* BRAND */}
       <Input {...register('brand')} placeholder='Brand' />
       {errors.brand && (
-        <p className='text-red-500 text-xs mt-1'>
-          {errors.brand.message}
-        </p>
+        <p className='text-red-500 text-xs mt-1'>{errors.brand.message}</p>
       )}
 
       {/* SERIAL / IMEI */}
       {!isMobile ? (
         <>
-          <Input
-            {...register('serialNumber')}
-            placeholder='Serial Number'
-          />
+          <Input {...register('serialNumber')} placeholder='Serial Number' />
           {errors.serialNumber && (
             <p className='text-red-500 text-xs mt-1'>
               {errors.serialNumber.message}
@@ -426,24 +417,38 @@ const AssetBlock = ({
 
       {/* IMAGES */}
       <Label>Upload Images *</Label>
-      <input
-        type='file'
-        multiple
-        accept='image/*'
-        onChange={(e) => uploadImages(e.target.files, assetType)}
-      />
-      {imageError && (
-        <p className='text-red-500 text-xs mt-1'>{imageError}</p>
-      )}
+      <div className='flex gap-2'>
+        {/* Camera */}
+        <label className='px-3 py-2 bg-blue-600 text-white rounded cursor-pointer'>
+          Camera
+          <input
+            type='file'
+            accept='image/*'
+            capture='environment'
+            className='hidden'
+            onChange={(e) => uploadImages(e.target.files, assetType)}
+          />
+        </label>
+
+        {/* Gallery */}
+        <label className='px-3 py-2 bg-gray-600 text-white rounded cursor-pointer'>
+          Gallery
+          <input
+            type='file'
+            accept='image/*'
+            className='hidden'
+            onChange={(e) => uploadImages(e.target.files, assetType)}
+          />
+        </label>
+      </div>
+
+      {imageError && <p className='text-red-500 text-xs mt-1'>{imageError}</p>}
 
       {/* IMAGE PREVIEW */}
       <div className='grid grid-cols-3 gap-3'>
         {images.map((img: string, i: number) => (
           <div key={i} className='relative'>
-            <img
-              src={img}
-              className='h-24 w-full object-cover rounded'
-            />
+            <img src={img} className='h-24 w-full object-cover rounded' />
             <button
               type='button'
               onClick={() =>
@@ -462,7 +467,6 @@ const AssetBlock = ({
     </div>
   );
 };
-
 
 const SimpleBlock = ({
   title,
@@ -500,9 +504,7 @@ const SimpleBlock = ({
         className='w-full border rounded-md p-3'
         placeholder='Describe the asset'
         value={value.description || ''}
-        onChange={(e) =>
-          onChange({ ...value, description: e.target.value })
-        }
+        onChange={(e) => onChange({ ...value, description: e.target.value })}
       />
     )}
 
