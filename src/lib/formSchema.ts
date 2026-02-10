@@ -98,6 +98,11 @@ export const LAPTOP_ACCESSORIES = [
   "Laptop Bag",
 ];
 
+export const TAB_ACCESSORIES = [
+  "Case/Cover",
+  "Screen Protector",
+]
+
 export const MOBILE_ACCESSORIES = [
   "Case/Cover",
   "Screen Protector",
