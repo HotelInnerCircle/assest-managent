@@ -1,120 +1,73 @@
 import { useState } from "react";
-import { ASSET_OPTIONS } from "@/lib/formSchema";
+import { ASSET_OPTIONS, AssetOption } from "@/lib/formSchema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { MdOutlineSimCard } from "react-icons/md";
 import {
   Laptop,
   Monitor,
   Smartphone,
-  Battery,
   Headphones,
   Package,
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
 
-const ASSET_ICONS: Record<string, React.ReactNode> = {
+const ASSET_ICONS: Record<AssetOption, React.ReactNode> = {
   Laptop: <Laptop className="w-5 h-5" />,
   Desktop: <Monitor className="w-5 h-5" />,
   "Mobile Phone": <Smartphone className="w-5 h-5" />,
-  "Charger / Adapter": <Battery className="w-5 h-5" />,
+  "Tablet / iPad": <Smartphone className="w-5 h-5" />,
+  "SIM Card": <MdOutlineSimCard className="w-5 h-5" />,
   Headset: <Headphones className="w-5 h-5" />,
-  "Other Accessories": <Package className="w-5 h-5" />,
+  "Other Assets": <Package className="w-5 h-5" />,
 };
 
-interface AssetSelectionProps {
-  selected: string[];
-  onNext: (selected: string[]) => void;
+interface Props {
+  selected: AssetOption[];
+  onNext: (v: AssetOption[]) => void;
   onBack: () => void;
 }
 
-const AssetSelection = ({
-  selected,
-  onNext,
-  onBack,
-}: AssetSelectionProps) => {
-  const [assets, setAssets] = useState<string[]>(selected);
-  const [error, setError] = useState("");
+export default function AssetSelection({ selected, onNext, onBack }: Props) {
+  const [assets, setAssets] = useState<AssetOption[]>(selected);
 
-  const toggle = (asset: string) => {
-    setError("");
-    setAssets((prev) =>
-      prev.includes(asset)
-        ? prev.filter((a) => a !== asset)
-        : [...prev, asset]
-    );
-  };
-
-  const handleNext = () => {
-    if (assets.length === 0) {
-      setError("Select at least one asset");
-      return;
-    }
-    onNext(assets);
-  };
+  const toggle = (a: AssetOption) =>
+    setAssets((p) => (p.includes(a) ? p.filter((x) => x !== a) : [...p, a]));
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">
-          Asset Selection
-        </h2>
-        <p className="text-muted-foreground mt-1">
-          Choose assigned assets
-        </p>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Asset Selection</h2>
 
-      {/* Options */}
-      <div className="grid gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         {ASSET_OPTIONS.map((asset) => (
           <label
             key={asset}
-            className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
+            className={`flex gap-3 p-4 border rounded-lg cursor-pointer ${
               assets.includes(asset)
-                ? "border-primary bg-primary/5 shadow-soft"
-                : "border-border hover:border-primary/40"
+                ? "border-primary bg-primary/5"
+                : "border-border"
             }`}
           >
             <Checkbox
               checked={assets.includes(asset)}
               onCheckedChange={() => toggle(asset)}
             />
-            <span className="text-primary">
-              {ASSET_ICONS[asset]}
-            </span>
-            <Label className="cursor-pointer font-medium">
-              {asset}
-            </Label>
+            {ASSET_ICONS[asset]}
+            <Label>{asset}</Label>
           </label>
         ))}
       </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
-
-      {/* Actions */}
-      <div className="flex justify-between pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        <Button
-          type="button"
-          onClick={handleNext}
-          className="gap-2"
-        >
-          Next <ArrowRight className="w-4 h-4" />
+        <Button onClick={() => onNext(assets)}>
+          Next <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
     </div>
   );
-};
-
-export default AssetSelection;
+}

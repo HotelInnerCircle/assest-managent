@@ -2,8 +2,19 @@ import { z } from "zod";
 
 /* ================= EMPLOYEE ================= */
 export const employeeSchema = z.object({
-  fullName: z.string().trim().min(1, "Full name is required").max(100),
-  email: z.string().trim().email("Invalid email address").max(255),
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Full name is required")
+    .max(100)
+    // ❌ Prevent numbers & special characters
+    .regex(/^[A-Za-z\s]+$/, "Name must contain only letters"),
+  number: z
+    .string()
+    .trim()
+    // ✅ Must start with 6,7,8,9 and be exactly 10 digits
+    .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
+
   employeeId: z.string().trim().min(1, "Employee ID is required").max(50),
 });
 
@@ -16,12 +27,13 @@ export const jobSchema = z.object({
 
 /* ================= ASSETS ================= */
 export const ASSET_OPTIONS = [
-   "Laptop",
+  "Laptop",
   "Desktop",
   "Mobile Phone",
-  "Charger / Adapter",
+  "Tablet / iPad",
+  "SIM Card",
   "Headset",
-  "Other Accessories",
+  "Other Assets",
 ] as const;
 
 export const assetSelectionSchema = z.object({
@@ -44,7 +56,7 @@ export const mobileSchema = z.object({
 
 /* ================= CONSTANTS ================= */
 export const DEPARTMENTS = [
-    "Accounts",
+  "Accounts",
   "Admin",
   "Audit",
   "Consultant",
@@ -115,7 +127,7 @@ export interface FormData {
 
 /* ================= INITIAL STATE ================= */
 export const initialFormData: FormData = {
-  employee: { fullName: "", email: "", employeeId: "" },
+  employee: { fullName: "", number: "", employeeId: "" },
   job: { company: "", department: "", designation: "" },
   selectedAssets: [],
   assetDetails: {},

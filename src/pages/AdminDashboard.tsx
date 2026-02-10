@@ -42,7 +42,7 @@ interface AssetBlock {
 interface Submission {
   id: string;
   employee_name: string;
-  employee_email: string;
+employee_number: number;
   employee_id: string;
   company: string;
   department: string;
@@ -142,7 +142,7 @@ const AdminDashboard = () => {
   const handleExport = () => {
     const rows = submissions.map((s) => ({
       "Employee Name": s.employee_name,
-      Email: s.employee_email,
+      // Email: s.employee_email,
       "Employee ID": s.employee_id,
       Company: s.company,
       Department: s.department,
@@ -231,7 +231,7 @@ const AdminDashboard = () => {
                     <TableCell>
                       <p className="font-medium">{s.employee_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {s.employee_email}
+                        {s.employee_number}
                       </p>
                     </TableCell>
 
@@ -291,7 +291,7 @@ const AdminDashboard = () => {
             <div className="space-y-4 text-sm">
               <p>
                 <strong>{selected.employee_name}</strong> (
-                {selected.employee_email})
+                {/* {selected.employee_email}) */}
               </p>
 
               <p>

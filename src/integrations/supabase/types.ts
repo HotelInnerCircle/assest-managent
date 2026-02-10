@@ -21,7 +21,6 @@ export type Database = {
           created_at: string
           department: string
           designation: string
-          employee_email: string
           employee_id: string
           employee_name: string
           id: string
@@ -35,7 +34,6 @@ export type Database = {
           created_at?: string
           department: string
           designation: string
-          employee_email: string
           employee_id: string
           employee_name: string
           id?: string
@@ -49,7 +47,6 @@ export type Database = {
           created_at?: string
           department?: string
           designation?: string
-          employee_email?: string
           employee_id?: string
           employee_name?: string
           id?: string

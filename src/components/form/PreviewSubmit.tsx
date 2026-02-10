@@ -8,11 +8,8 @@ import {
   User,
   Briefcase,
   Package,
-  Image as ImageIcon,
-  Laptop,
-  Smartphone,
-  Monitor,
   Building2,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface PreviewSubmitProps {
@@ -45,17 +42,18 @@ const PreviewSubmit = ({
         <h3 className="font-semibold flex items-center gap-2">
           <User className="w-4 h-4 text-primary" /> Employee
         </h3>
+
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
           <div>
             <span className="text-muted-foreground">Name:</span>{" "}
             <strong>{data.employee.fullName}</strong>
           </div>
           <div>
-            <span className="text-muted-foreground">Email:</span>{" "}
-            <strong>{data.employee.email}</strong>
+            <span className="text-muted-foreground">Mobile:</span>{" "}
+            <strong>{data.employee.number}</strong>
           </div>
           <div>
-            <span className="text-muted-foreground">ID:</span>{" "}
+            <span className="text-muted-foreground">Employee ID:</span>{" "}
             <strong>{data.employee.employeeId}</strong>
           </div>
         </div>
@@ -94,33 +92,19 @@ const PreviewSubmit = ({
           <Package className="w-4 h-4 text-primary" /> Assigned Assets
         </h3>
 
-        {/* -------- LAPTOP -------- */}
-        {data.assetDetails.laptop && (
-          <AssetPreview
-            title="Laptop"
-            icon={<Laptop className="w-4 h-4" />}
-            asset={data.assetDetails.laptop}
-          />
+        {Object.entries(data.assetDetails).length === 0 && (
+          <p className="text-sm text-muted-foreground">
+            No assets selected
+          </p>
         )}
 
-        {/* -------- DESKTOP -------- */}
-        {data.assetDetails.desktop && (
+        {Object.entries(data.assetDetails).map(([assetName, asset]) => (
           <AssetPreview
-            title="Desktop"
-            icon={<Monitor className="w-4 h-4" />}
-            asset={data.assetDetails.desktop}
+            key={assetName}
+            title={assetName}
+            asset={asset as any}
           />
-        )}
-
-        {/* -------- MOBILE -------- */}
-        {data.assetDetails.mobile && (
-          <AssetPreview
-            title="Mobile Phone"
-            icon={<Smartphone className="w-4 h-4" />}
-            asset={data.assetDetails.mobile}
-            isMobile
-          />
-        )}
+        ))}
       </div>
 
       {/* ================= CONFIRM ================= */}
@@ -141,7 +125,7 @@ const PreviewSubmit = ({
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
         <Button onClick={onSubmit} disabled={!confirmed || submitting}>
-          {submitting ? "Submitting..." : "Submit"}{" "}
+          {submitting ? "Submitting..." : "Submit"}
           <Send className="w-4 h-4 ml-2" />
         </Button>
       </div>
@@ -151,61 +135,58 @@ const PreviewSubmit = ({
 
 export default PreviewSubmit;
 
-/* ================= REUSABLE PREVIEW ================= */
+/* ================= ASSET PREVIEW ================= */
 
 const AssetPreview = ({
   title,
-  icon,
   asset,
-  isMobile = false,
 }: {
   title: string;
-  icon: React.ReactNode;
-  asset: any;
-  isMobile?: boolean;
-}) => (
-  <div className="mt-3 p-4 bg-muted rounded-md space-y-2">
-    <p className="font-medium flex items-center gap-2">
-      {icon} {title}
-    </p>
+  asset: Record<string, any>;
+}) => {
+  const { images, accessories, ...rest } = asset || {};
 
-    <p className="text-sm">
-      Brand: <strong>{asset.brand}</strong>
-      {!isMobile && asset.serialNumber && (
-        <>
-          {" "} | Serial: <strong>{asset.serialNumber}</strong>
-        </>
-      )}
-    </p>
+  return (
+    <div className="bg-muted rounded-md p-4 space-y-3">
+      <p className="font-medium">{title}</p>
 
-    {isMobile && asset.imeiNumber && (
-      <p className="text-sm">
-        IMEI: <strong>{asset.imeiNumber}</strong>
-      </p>
-    )}
-
-    {asset.accessories?.length > 0 && (
-      <p className="text-sm">
-        Accessories: {asset.accessories.join(", ")}
-      </p>
-    )}
-
-    {asset.images?.length > 0 && (
-      <div className="space-y-2">
-        <p className="text-sm font-medium flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-primary" /> Images
+      {/* TEXT DETAILS */}
+      {Object.entries(rest).map(([key, value]) => (
+        <p key={key} className="text-sm">
+          <span className="capitalize text-muted-foreground">
+            {key.replace(/([A-Z])/g, " $1")}:
+          </span>{" "}
+          <strong>{String(value)}</strong>
         </p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {asset.images.map((url: string, i: number) => (
-            <img
-              key={i}
-              src={url}
-              alt={`${title} ${i + 1}`}
-              className="w-full h-20 object-cover rounded-md border"
-            />
-          ))}
+      ))}
+
+      {/* ACCESSORIES */}
+      {Array.isArray(accessories) && accessories.length > 0 && (
+        <p className="text-sm">
+          <span className="text-muted-foreground">Accessories:</span>{" "}
+          <strong>{accessories.join(", ")}</strong>
+        </p>
+      )}
+
+      {/* IMAGES PREVIEW */}
+      {Array.isArray(images) && images.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-primary" /> Images
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {images.map((url: string, i: number) => (
+              <img
+                key={i}
+                src={url}
+                alt={`${title} ${i + 1}`}
+                className="h-24 w-full object-cover rounded-md border"
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};

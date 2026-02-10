@@ -3,7 +3,6 @@
 CREATE TABLE public.submissions (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   employee_name TEXT NOT NULL,
-  employee_email TEXT NOT NULL,
   employee_id TEXT NOT NULL,
   department TEXT NOT NULL,
   designation TEXT NOT NULL,
