@@ -33,7 +33,7 @@ const Index = () => {
             <ClipboardList className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-primary-foreground tracking-tight">
-            Asset Assignment
+            Asset Employee Self Mapping-Portal
           </h1>
           <p className="mt-4 text-lg text-primary-foreground/70 max-w-md mx-auto">
             Complete the form to register your assigned enterprise assets. All information is stored securely.
