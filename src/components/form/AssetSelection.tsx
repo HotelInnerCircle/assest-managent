@@ -32,22 +32,40 @@ interface Props {
 
 export default function AssetSelection({ selected, onNext, onBack }: Props) {
   const [assets, setAssets] = useState<AssetOption[]>(selected);
+  const [error, setError] = useState("");
 
-  const toggle = (a: AssetOption) =>
-    setAssets((p) => (p.includes(a) ? p.filter((x) => x !== a) : [...p, a]));
+  const toggle = (a: AssetOption) => {
+    setAssets((prev) =>
+      prev.includes(a)
+        ? prev.filter((x) => x !== a)
+        : [...prev, a]
+    );
+    setError(""); // clear error when selecting
+  };
+
+  const handleNext = () => {
+    if (assets.length === 0) {
+      setError("Please select at least one asset to continue.");
+      return;
+    }
+
+    onNext(assets);
+  };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Asset Selection</h2>
+      <h2 className="text-2xl font-bold">
+        Asset Selection <span className="text-red-500">*</span>
+      </h2>
 
       <div className="grid sm:grid-cols-2 gap-3">
         {ASSET_OPTIONS.map((asset) => (
           <label
             key={asset}
-            className={`flex gap-3 p-4 border rounded-lg cursor-pointer ${
+            className={`flex gap-3 p-4 border rounded-lg cursor-pointer transition ${
               assets.includes(asset)
                 ? "border-primary bg-primary/5"
-                : "border-border"
+                : "border-border hover:bg-muted/40"
             }`}
           >
             <Checkbox
@@ -60,11 +78,21 @@ export default function AssetSelection({ selected, onNext, onBack }: Props) {
         ))}
       </div>
 
+      {error && (
+        <p className="text-sm text-red-500 font-medium">
+          {error}
+        </p>
+      )}
+
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        <Button onClick={() => onNext(assets)}>
+
+        <Button
+          onClick={handleNext}
+          disabled={assets.length === 0}
+        >
           Next <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
