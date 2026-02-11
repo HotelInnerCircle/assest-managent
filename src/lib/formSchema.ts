@@ -59,6 +59,7 @@ export const DEPARTMENTS = [
   "Accounts",
   "Admin",
   "Audit",
+  "Projects",
   "Consultant",
   "F&B",
   "Front Office",
@@ -81,6 +82,7 @@ export const DEPARTMENTS = [
   "Web Developer",
   "Operations Manager",
   "IT",
+  "Others"
 ];
 
 export const COMPANY = [
