@@ -32,9 +32,11 @@ import { Session } from "@supabase/supabase-js";
 /* ================= TYPES ================= */
 
 interface AssetBlock {
-  brand: string;
+  brand?: string;
   serialNumber?: string;
   imeiNumber?: string;
+  simNumber?: string;
+  description?: string;
   accessories?: string[];
   images?: string[];
 }
@@ -42,22 +44,18 @@ interface AssetBlock {
 interface Submission {
   id: string;
   employee_name: string;
-employee_number: number;
+  employee_number: string;
   employee_id: string;
   company: string;
   department: string;
   designation: string;
   selected_assets: string[];
-  asset_details: {
-    laptop?: AssetBlock;
-    desktop?: AssetBlock;
-    mobile?: AssetBlock;
-  };
+  asset_details: Record<string, AssetBlock>;
   confirmed: boolean;
   created_at: string;
 }
 
-/* ================= COMPONENT ================= */
+const ITEMS_PER_PAGE = 5;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -66,6 +64,7 @@ const AdminDashboard = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   /* ================= AUTH ================= */
 
@@ -89,18 +88,7 @@ const AdminDashboard = () => {
     if (session) fetchSubmissions();
   }, [session]);
 
-  /* ================= HELPERS ================= */
-
-  const getAllImages = (assetDetails: any): string[] => {
-    if (!assetDetails) return [];
-    return [
-      ...(assetDetails.laptop?.images || []),
-      ...(assetDetails.desktop?.images || []),
-      ...(assetDetails.mobile?.images || []),
-    ];
-  };
-
-  /* ================= DATA ================= */
+  /* ================= FETCH ================= */
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -119,13 +107,28 @@ const AdminDashboard = () => {
     } else {
       setSubmissions((data as Submission[]) || []);
     }
+
     setLoading(false);
   };
+
+  /* ================= PAGINATION ================= */
+
+  const totalPages = Math.ceil(submissions.length / ITEMS_PER_PAGE);
+
+  const paginatedData = submissions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  /* ================= ACTIONS ================= */
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this submission?")) return;
 
-    const { error } = await supabase.from("submissions").delete().eq("id", id);
+    const { error } = await supabase
+      .from("submissions")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       toast({
@@ -134,7 +137,9 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
     } else {
-      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+      setSubmissions((prev) =>
+        prev.filter((s) => s.id !== id)
+      );
       toast({ title: "Deleted", description: "Submission removed" });
     }
   };
@@ -142,19 +147,12 @@ const AdminDashboard = () => {
   const handleExport = () => {
     const rows = submissions.map((s) => ({
       "Employee Name": s.employee_name,
-      // Email: s.employee_email,
       "Employee ID": s.employee_id,
+      "Mobile Number": s.employee_number,
       Company: s.company,
       Department: s.department,
       Designation: s.designation,
       Assets: s.selected_assets.join(", "),
-      "Laptop Brand": s.asset_details?.laptop?.brand || "",
-      "Laptop Serial": s.asset_details?.laptop?.serialNumber || "",
-      "Desktop Brand": s.asset_details?.desktop?.brand || "",
-      "Desktop Serial": s.asset_details?.desktop?.serialNumber || "",
-      "Mobile Brand": s.asset_details?.mobile?.brand || "",
-      "Mobile IMEI": s.asset_details?.mobile?.imeiNumber || "",
-      Images: getAllImages(s.asset_details).join(", "),
       "Submitted At": new Date(s.created_at).toLocaleDateString(),
     }));
 
@@ -174,8 +172,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
+
+      {/* HEADER */}
+      <header className="border-b bg-card shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-primary" />
@@ -186,9 +185,11 @@ const AdminDashboard = () => {
             <Button variant="outline" size="sm" onClick={fetchSubmissions}>
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
+
             <Button variant="outline" size="sm" onClick={handleExport}>
               <Download className="w-4 h-4 mr-1" /> Export
             </Button>
+
             <Button
               variant="ghost"
               size="sm"
@@ -201,150 +202,161 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      {/* TABLE */}
+      <main className="max-w-7xl mx-auto px-6 pb-10">
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="animate-spin text-primary" />
           </div>
-        ) : submissions.length === 0 ? (
-          <p className="text-center text-muted-foreground py-20">
-            No submissions found
-          </p>
         ) : (
-          <div className="border rounded-lg overflow-hidden bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Assets</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {submissions.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell>
-                      <p className="font-medium">{s.employee_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {s.employee_number}
-                      </p>
-                    </TableCell>
-
-                    <TableCell>{s.company}</TableCell>
-                    <TableCell>{s.department}</TableCell>
-
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {s.selected_assets.map((a) => (
-                          <span
-                            key={a}
-                            className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary"
-                          >
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    </TableCell>
-
-                    <TableCell>
-                      {new Date(s.created_at).toLocaleDateString()}
-                    </TableCell>
-
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelected(s)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive"
-                        onClick={() => handleDelete(s.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+          <>
+            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Mobile</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Assets</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+
+                <TableBody>
+                  {paginatedData.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell>{s.employee_name}</TableCell>
+                      <TableCell>{s.employee_id}</TableCell>
+                      <TableCell>{s.employee_number}</TableCell>
+                      <TableCell>{s.company}</TableCell>
+                      <TableCell>{s.department}</TableCell>
+                      <TableCell>
+                        {s.selected_assets.join(", ")}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(s.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelected(s)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive"
+                          onClick={() => handleDelete(s.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* PAGINATION */}
+            <div className="flex justify-center items-center gap-3 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </>
         )}
       </main>
 
-      {/* ================= MODAL ================= */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      {/* ================= VIEW MODAL ================= */}
+
+      <Dialog open={selected !== null} onOpenChange={() => setSelected(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submission Detail</DialogTitle>
+            <DialogTitle>Submission Details</DialogTitle>
           </DialogHeader>
 
           {selected && (
-            <div className="space-y-4 text-sm">
-              <p>
-                <strong>{selected.employee_name}</strong> (
-                {/* {selected.employee_email}) */}
-              </p>
+            <div className="space-y-4">
 
-              <p>
-                <strong>Company:</strong> {selected.company}
-              </p>
+              <div className="border p-4 rounded-lg bg-muted/40">
+                <p><b>Name:</b> {selected.employee_name}</p>
+                <p><b>Employee ID:</b> {selected.employee_id}</p>
+                <p><b>Mobile:</b> {selected.employee_number}</p>
+                <p><b>Company:</b> {selected.company}</p>
+                <p><b>Department:</b> {selected.department}</p>
+                <p><b>Designation:</b> {selected.designation}</p>
+              </div>
 
-              <p>
-                <strong>Department:</strong> {selected.department}
-              </p>
+              {Object.entries(selected.asset_details || {}).map(
+                ([type, block]) => (
+                  <div key={type} className="border p-4 rounded-lg">
+                    <h4 className="font-semibold capitalize mb-2">
+                      {type}
+                    </h4>
 
-              <p>
-                <strong>Designation:</strong> {selected.designation}
-              </p>
-
-              <hr />
-
-              {["laptop", "desktop", "mobile"].map((type) => {
-                const block = (selected.asset_details as any)?.[type];
-                if (!block) return null;
-
-                return (
-                  <div key={type}>
-                    <p className="font-medium capitalize">{type}</p>
-                    <p>Brand: {block.brand}</p>
-                    {block.serialNumber && <p>SN: {block.serialNumber}</p>}
+                    {block.brand && <p>Brand: {block.brand}</p>}
+                    {block.serialNumber && <p>Serial: {block.serialNumber}</p>}
                     {block.imeiNumber && <p>IMEI: {block.imeiNumber}</p>}
+                    {block.simNumber && <p>SIM: {block.simNumber}</p>}
+                    {block.description && <p>Description: {block.description}</p>}
+
                     {block.accessories?.length > 0 && (
-                      <p>Accessories: {block.accessories.join(", ")}</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {block.accessories.map((acc) => (
+                          <span
+                            key={acc}
+                            className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary"
+                          >
+                            {acc}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {block.images?.length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                        {block.images.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            className="rounded-lg border h-28 w-full object-cover"
+                          />
+                        ))}
+                      </div>
                     )}
                   </div>
-                );
-              })}
-
-              {getAllImages(selected.asset_details).length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Images</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {getAllImages(selected.asset_details).map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer">
-                        <img
-                          src={url}
-                          alt={`Asset ${i + 1}`}
-                          className="rounded-lg border h-28 w-full object-cover"
-                        />
-                      </a>
-                    ))}
-                  </div>
-                </div>
+                )
               )}
+
             </div>
           )}
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

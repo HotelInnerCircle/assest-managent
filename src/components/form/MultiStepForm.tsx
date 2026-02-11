@@ -59,8 +59,9 @@ const MultiStepForm = () => {
     try {
       const { error } = await supabase.from('submissions').insert({
         employee_name: formData.employee.fullName,
-
         employee_id: formData.employee.employeeId,
+        employee_number: formData.employee.number,
+        company: formData.job.company,
         department: formData.job.department,
         designation: formData.job.designation,
         selected_assets: formData.selectedAssets,

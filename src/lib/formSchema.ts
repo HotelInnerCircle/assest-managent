@@ -86,8 +86,9 @@ export const DEPARTMENTS = [
 export const COMPANY = [
   "RKS MOTOR",
   "BROADDCAST BUSINESS SOLUTIONS",
+  "HOTEL INNERCIRCLE",
   "VERAVITA",
-  "AUTOZONE",
+  "SABOO AUTOZONE",
 ];
 
 /* ================= ACCESSORIES ================= */
