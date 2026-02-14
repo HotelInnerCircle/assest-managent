@@ -322,14 +322,14 @@ const AdminDashboard = () => {
                         <Eye className='w-4 h-4' />
                       </Button>
 
-                      <Button
+                      {/* <Button
                         variant='ghost'
                         size='icon'
                         className='text-destructive'
                         onClick={() => handleDelete(s.id)}
                       >
                         <Trash2 className='w-4 h-4' />
-                      </Button>
+                      </Button> */}
                     </TableCell>
                   </TableRow>
                 ))}
