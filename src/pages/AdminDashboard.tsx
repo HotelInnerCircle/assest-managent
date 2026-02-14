@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { IoDesktop } from "react-icons/io5";
 import {
   LogOut,
   Download,
@@ -32,6 +33,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Session } from '@supabase/supabase-js';
+import { FaSimCard } from "react-icons/fa";
 
 /* ================= TYPES ================= */
 
@@ -117,35 +119,38 @@ const AdminDashboard = () => {
 
   /* ================= STATS ================= */
 
-const stats = useMemo(() => {
-  const result = {
-    phones: 0,
-    laptops: 0,
-    tablets: 0,
-    sims: 0,
-    others: 0,
-  };
+  const stats = useMemo(() => {
+    const result = {
+      phones: 0,
+      laptops: 0,
+      desktops: 0,
+      tablets: 0,
+      sims: 0,
+      others: 0,
+    };
 
-  submissions.forEach((s) => {
-    s.selected_assets.forEach((asset) => {
-      const name = asset.toLowerCase();
+    submissions.forEach((s) => {
+      s.selected_assets.forEach((asset) => {
+        const name = asset.toLowerCase();
 
-      if (name.includes('phone') || name.includes('mobile')) {
-        result.phones++;
-      } else if (name.includes('laptop')) {
-        result.laptops++;
-      } else if (name.includes('tablet') || name.includes('tab')) {
-        result.tablets++;
-      } else if (name.includes('sim')) {
-        result.sims++;
-      } else {
-        result.others++;
-      }
+        if (name.includes('phone') || name.includes('mobile')) {
+          result.phones++;
+        } else if (name.includes('laptop')) {
+          result.laptops++;
+        } else if (name.includes('desktop')) {
+          result.desktops++;
+        } else if (name.includes('tablet') || name.includes('tab')) {
+          result.tablets++;
+        } else if (name.includes('sim')) {
+          result.sims++;
+        } else {
+          result.others++;
+        }
+      });
     });
-  });
 
-  return result;
-}, [submissions]);
+    return result;
+  }, [submissions]);
 
   /* ================= PAGINATION ================= */
 
@@ -170,12 +175,13 @@ const stats = useMemo(() => {
   };
 
   const handleExport = () => {
-    const rows = submissions.map((s) => ({
+    const rows = submissions.map((s, index) => ({
+      'S.No': index + 1,
       Name: s.employee_name,
       ID: s.employee_id,
       Mobile: s.employee_number,
       Department: s.department,
-      Assets: s.selected_assets.join(', '),
+      Assets: (s.selected_assets || []).join(', '),
       Date: new Date(s.created_at).toLocaleDateString(),
     }));
 
@@ -226,14 +232,45 @@ const stats = useMemo(() => {
           <StatCard
             title='Total Submissions'
             value={submissions.length}
-            icon={<Package />} variant="primary" 
+            icon={<Package />}
+            variant='primary'
           />
-          <StatCard title='Phones' value={stats.phones} icon={<Smartphone />}  variant="blue"/>
-          <StatCard title='Laptops' value={stats.laptops} icon={<Laptop />}   variant="green" />
-          <StatCard title='Tablets' value={stats.tablets} icon={<Tablet />}  variant="orange"/>
-           <StatCard title='Sims' value={stats.sims} icon={<Package />}  variant="pink"/>
-          <StatCard title='Others' value={stats.others} icon={<Package />}  variant="purple"/>
-
+          <StatCard
+            title='Phones'
+            value={stats.phones}
+            icon={<Smartphone />}
+            variant='blue'
+          />
+          <StatCard
+            title='Laptops'
+            value={stats.laptops}
+            icon={<Laptop />}
+            variant='green'
+          />
+          <StatCard
+            title='Desktops'
+            value={stats.desktops}
+            icon={<IoDesktop />}
+            variant='green'
+          />
+          <StatCard
+            title='Tablets'
+            value={stats.tablets}
+            icon={<Tablet />}
+            variant='orange'
+          />
+          <StatCard
+            title='Sims'
+            value={stats.sims}
+            icon={<FaSimCard />}
+            variant='pink'
+          />
+          <StatCard
+            title='Others'
+            value={stats.others}
+            icon={<Package />}
+            variant='purple'
+          />
         </div>
 
         {/* TABLE */}
@@ -246,10 +283,11 @@ const stats = useMemo(() => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No</TableHead>
                   <TableHead>Employee</TableHead>
                   <TableHead>ID</TableHead>
                   <TableHead>Mobile</TableHead>
-                 <TableHead>Company</TableHead>
+                  <TableHead>Company</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Assets</TableHead>
                   <TableHead>Date</TableHead>
@@ -258,15 +296,20 @@ const stats = useMemo(() => {
               </TableHeader>
 
               <TableBody>
-                {paginatedData.map((s) => (
+                {paginatedData.map((s,index) => (
                   <TableRow key={s.id} className='hover:bg-gray-50 transition'>
+                    <TableCell>
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </TableCell>
                     <TableCell>{s.employee_name}</TableCell>
                     <TableCell>{s.employee_id}</TableCell>
                     <TableCell>{s.employee_number}</TableCell>
 
                     <TableCell>{s.company}</TableCell>
                     <TableCell>{s.department}</TableCell>
-                    <TableCell>{s.selected_assets.join(', ')}</TableCell>
+                   <TableCell>
+                      {(s.selected_assets || []).join(", ") || "-"}
+                    </TableCell>
                     <TableCell>
                       {new Date(s.created_at).toLocaleDateString()}
                     </TableCell>
@@ -324,85 +367,118 @@ const stats = useMemo(() => {
       </main>
 
       {/* MODAL */}
-      <Dialog open={selected !== null} onOpenChange={() => setSelected(null)}>
-        <DialogContent className='max-w-4xl rounded-2xl'>
-          <DialogHeader>
-            <DialogTitle>Submission Details</DialogTitle>
-          </DialogHeader>
+<Dialog open={selected !== null} onOpenChange={() => setSelected(null)}>
+  <DialogContent className="max-w-5xl rounded-3xl p-0 overflow-hidden">
+    {selected && (
+      <div className="flex flex-col max-h-[85vh]">
 
-          {selected && (
-            <div className='space-y-4'>
-              <div className='bg-gray-50 p-4 rounded-lg border'>
-                <p>
-                  <b>Name:</b> {selected.employee_name}
-                </p>
-                <p>
-                  <b>ID:</b> {selected.employee_id}
-                </p>
-                <p>
-                  <b>Mobile:</b> {selected.employee_number}
-                </p>
-                <p>
-                  <b>Department:</b> {selected.department}
-                </p>
-                <p>
-                  <b>Company:</b> {selected.company}
-                </p>
-                <p>
-                  <b>Designation:</b> {selected.designation}
-                </p>
-                {Object.entries(selected.asset_details || {}).map(
-                  ([type, block]) => (
-                    <div key={type} className='border p-4 rounded-lg'>
-                      <h4 className='font-semibold capitalize mb-2'>{type}</h4>
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6">
+          <h2 className="text-2xl font-semibold">
+            {selected.employee_name}
+          </h2>
+          <p className="text-sm opacity-80">
+            Submission Details • {new Date(selected.created_at).toLocaleString()}
+          </p>
+        </div>
 
-                      {block.brand && <p>Brand: {block.brand}</p>}
-                      {block.serialNumber && (
-                        <p>Serial: {block.serialNumber}</p>
-                      )}
-                      {block.imeiNumber && <p>IMEI: {block.imeiNumber}</p>}
-                      {block.simNumber && <p>SIM: {block.simNumber}</p>}
-                      {block.description && (
-                        <p>Description: {block.description}</p>
-                      )}
+        {/* CONTENT */}
+        <div className="overflow-y-auto p-6 space-y-6 bg-gray-50">
 
-                      {block.accessories?.length > 0 && (
-                        <div className='flex flex-wrap gap-2 mt-2'>
-                          {block.accessories.map((acc) => (
-                            <span
-                              key={acc}
-                              className='px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary'
-                            >
-                              {acc}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+          {/* EMPLOYEE INFO CARD */}
+          <div className="bg-white rounded-2xl shadow-sm border p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                      {block.images?.length > 0 && (
-                        <div className='grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3'>
-                          {block.images.map((url, i) => (
-                            <img
-                              key={i}
-                              src={url}
-                              className='rounded-lg border h-28 w-full object-cover'
-                            />
-                          ))}
-                        </div>
-                      )}
+            <InfoItem label="Employee ID" value={selected.employee_id} />
+            <InfoItem label="Mobile" value={selected.employee_number} />
+            <InfoItem label="Department" value={selected.department} />
+            <InfoItem label="Company" value={selected.company} />
+            <InfoItem label="Designation" value={selected.designation} />
+          </div>
+
+          {/* ASSET DETAILS */}
+          {Object.entries(selected.asset_details || {}).map(
+            ([type, block]) => (
+              <div
+                key={type}
+                className="bg-white rounded-2xl shadow-sm border p-6 space-y-4"
+              >
+                <h3 className="text-lg font-semibold capitalize text-indigo-600 border-b pb-2">
+                  {type}
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+                  {block.brand && (
+                    <InfoItem label="Brand" value={block.brand} />
+                  )}
+
+                  {block.serialNumber && (
+                    <InfoItem label="Serial Number" value={block.serialNumber} />
+                  )}
+
+                  {block.imeiNumber && (
+                    <InfoItem label="IMEI" value={block.imeiNumber} />
+                  )}
+
+                  {block.simNumber && (
+                    <InfoItem label="SIM Number" value={block.simNumber} />
+                  )}
+
+                  {block.description && (
+                    <div className="col-span-full">
+                      <p className="text-gray-500 text-xs mb-1">Description</p>
+                      <p className="bg-gray-100 p-3 rounded-lg text-sm">
+                        {block.description}
+                      </p>
                     </div>
-                  ),
+                  )}
+                </div>
+
+                {/* ACCESSORIES */}
+                {block.accessories?.length > 0 && (
+                  <div>
+                    <p className="text-gray-500 text-xs mb-2">Accessories</p>
+                    <div className="flex flex-wrap gap-2">
+                      {block.accessories.map((acc) => (
+                        <span
+                          key={acc}
+                          className="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-600 font-medium"
+                        >
+                          {acc}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* IMAGES */}
+                {block.images?.length > 0 && (
+                  <div>
+                    <p className="text-gray-500 text-xs mb-3">Images</p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {block.images.map((url, i) => (
+                        <ImageCard key={i} src={url} />
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
+            )
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
+
     </div>
   );
 };
 
 /* ================= STAT CARD ================= */
+
+
 const StatCard = ({
   title,
   value,
@@ -414,48 +490,98 @@ const StatCard = ({
   icon: React.ReactNode;
   variant?: "primary" | "blue" | "green" | "orange" | "pink" | "purple";
 }) => {
+  const [count, setCount] = useState(0);
+
+  // Smooth counter animation
+  useEffect(() => {
+    let start = 0;
+    const duration = 800;
+    const increment = value / (duration / 16);
+
+    const counter = setInterval(() => {
+      start += increment;
+      if (start >= value) {
+        setCount(value);
+        clearInterval(counter);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(counter);
+  }, [value]);
 
   const variants = {
     primary:
-      "bg-gradient-to-br from-indigo-500 to-purple-600",
+      "from-indigo-500/20 to-purple-600/20 border-indigo-500/30",
     blue:
-      "bg-gradient-to-br from-blue-500 to-cyan-600",
+      "from-blue-500/20 to-cyan-600/20 border-blue-500/30",
     green:
-      "bg-gradient-to-br from-emerald-500 to-green-600",
+      "from-emerald-500/20 to-green-600/20 border-emerald-500/30",
     orange:
-      "bg-gradient-to-br from-orange-500 to-amber-600",
+      "from-orange-500/20 to-amber-600/20 border-orange-500/30",
     pink:
-      "bg-gradient-to-br from-pink-500 to-rose-600",
+      "from-pink-500/20 to-rose-600/20 border-pink-500/30",
     purple:
-      "bg-gradient-to-br from-red-400 to-blue-700",
+      "from-violet-500/20 to-fuchsia-600/20 border-violet-500/30",
   };
 
   return (
     <div
       className={`
-        relative overflow-hidden
-        rounded-2xl p-6
-        ${variants[variant]}
-        text-white
-        shadow-lg
-        hover:shadow-2xl
-        transform hover:-translate-y-1
+        group relative
+        rounded-3xl p-[1px]
+        bg-gradient-to-br ${variants[variant]}
         transition-all duration-300
+        hover:scale-[1.03]
       `}
     >
-      {/* Glow bubble */}
-      <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/20 rounded-full blur-2xl"></div>
+      <div
+        className="
+          relative rounded-3xl p-6
+          bg-white/70 dark:bg-gray-900/70
+          backdrop-blur-xl
+          border border-white/20 dark:border-gray-700
+          shadow-lg
+          overflow-hidden
+        "
+      >
+        {/* Soft glow background */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-white/40 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-50 transition"></div>
 
-      <div className="flex justify-between items-center relative z-10">
-        <div>
-          <p className="text-sm opacity-80">{title}</p>
-          <h2 className="text-3xl font-bold mt-1 tracking-tight">
-            {value}
-          </h2>
+        <div className="flex justify-between items-center relative z-10">
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              {title}
+            </p>
+
+            <h2 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">
+              {count}
+            </h2>
+          </div>
+
+          <div
+            className="
+              flex items-center justify-center
+              w-14 h-14
+              rounded-2xl
+              bg-gradient-to-br from-red-500 to-blue-600
+              text-white
+              shadow-md
+              group-hover:rotate-6
+              transition-transform duration-300
+            "
+          >
+            {icon}
+          </div>
         </div>
 
-        <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl">
-          {icon}
+        {/* Bottom subtle progress bar animation */}
+        <div className="absolute bottom-0 left-0 h-1 w-full bg-gray-200 dark:bg-gray-700 overflow-hidden rounded-b-3xl">
+          <div
+            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 animate-pulse"
+            style={{ width: `${Math.min((value / 100) * 100, 100)}%` }}
+          ></div>
         </div>
       </div>
     </div>
@@ -463,5 +589,42 @@ const StatCard = ({
 };
 
 
-
 export default AdminDashboard;
+
+
+const ImageCard = ({ src }: { src: string }) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative group rounded-xl overflow-hidden border bg-gray-100 aspect-square">
+
+      {!loaded && (
+        <div className="absolute inset-0 animate-pulse bg-gray-200" />
+      )}
+
+      <img
+        src={src}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-full object-cover transition duration-300 
+        ${loaded ? "opacity-100" : "opacity-0"}
+        group-hover:scale-105`}
+        alt="asset"
+      />
+    </div>
+  );
+};
+
+
+const InfoItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) => (
+  <div>
+    <p className="text-gray-500 text-xs mb-1">{label}</p>
+    <p className="font-medium text-gray-800">{value || "-"}</p>
+  </div>
+);
