@@ -174,23 +174,57 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleExport = () => {
-    const rows = submissions.map((s, index) => ({
-      'S.No': index + 1,
+const handleExport = () => {
+  const rows = [];
+
+  submissions.forEach((s, index) => {
+    const base = {
+      "S.No": index + 1,
       Name: s.employee_name,
       ID: s.employee_id,
       Mobile: s.employee_number,
       Department: s.department,
-      Assets: (s.selected_assets || []).join(', '),
-      Date: new Date(s.created_at).toLocaleDateString(),
-    }));
+      Company: s.company,
+      Date: new Date(s.created_at).toLocaleString(),
+    };
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Submissions');
-    XLSX.writeFile(wb, 'asset-submissions.xlsx');
-  };
+    // If no asset details
+    if (!s.asset_details || Object.keys(s.asset_details).length === 0) {
+      rows.push({
+        ...base,
+        AssetType: "-",
+        Brand: "-",
+        SerialNumber: "-",
+        IMEI: "-",
+        SIM: "-",
+        Accessories: "-",
+        Description: "-",
+        Images: "-",
+      });
+    } else {
+      // Loop each asset type
+      Object.entries(s.asset_details).forEach(([type, block]) => {
+        rows.push({
+          ...base,
+          AssetType: type,
+          Brand: block.brand || "-",
+          SerialNumber: block.serialNumber || "-",
+          IMEI: block.imeiNumber || "-",
+          SIM: block.simNumber || "-",
+          Accessories: (block.accessories || []).join(", "),
+          Description: block.description || "-",
+          Images: (block.images || []).join(", "),
+        });
+      });
+    }
+  });
 
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Submissions");
+
+  XLSX.writeFile(wb, "asset-submissions.xlsx");
+};
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
